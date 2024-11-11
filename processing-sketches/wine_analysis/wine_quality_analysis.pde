@@ -43,40 +43,47 @@ void setup() {
   cp5.addSlider("qualityMin")
      .setPosition(20, 20)
      .setRange(minQuality, maxQuality)
-     .setValue(qualityMin);
+     .setValue(qualityMin)
+     .setLabel("Wine minimum quality")
+     .setColorLabel(color(0));
+
 
   cp5.addSlider("qualityMax")
      .setPosition(20, 50)
      .setRange(minQuality, maxQuality)
-     .setValue(qualityMax);
+     .setValue(qualityMax)
+     .setLabel("Wine minimum quality")
+     .setColorLabel(color(0));
 }
 
 void drawGridLines() {
   stroke(200);
   int gridSize = 100;
-  int steps = 10;
-  float stepSize = (float) (gridSize * 2) / steps;
+  int numTicks = 10;
+  float stepSize = (float) (gridSize * 2) / numTicks;
 
   for (float i = -gridSize; i <= gridSize; i += stepSize) {
-    // XY plane
+    // XY plane grid lines
     line(i, -gridSize, 0, i, gridSize, 0);
     line(-gridSize, i, 0, gridSize, i, 0);
 
-    // XZ plane
+    // XZ plane grid lines
     line(i, 0, -gridSize, i, 0, gridSize);
     line(-gridSize, 0, i, gridSize, 0, i);
 
-    // YZ plane
+    // YZ plane grid lines
     line(0, i, -gridSize, 0, i, gridSize);
     line(0, -gridSize, i, 0, gridSize, i);
   }
 }
 
+
 void drawColorLegend() {
   int legendWidth = 20;
-  int legendHeight = 100;
+  int legendHeight = 150;
   int x = 20;
   int y = 110;
+  int numTicks = 5;
 
   // Draw the color gradient
   for (int i = 0; i <= legendHeight; i++) {
@@ -91,13 +98,28 @@ void drawColorLegend() {
   stroke(0);
   rect(x, y, legendWidth, legendHeight);
 
-  // Add labels
+  // Add tick marks and labels
+  for (int i = 0; i <= numTicks; i++) {
+    float t = map(i, 0, numTicks, 0, legendHeight);
+    float value = map(i, 0, numTicks, maxQuality, minQuality);
+    int tickY = y + (int)t;
+
+    // Draw tick mark
+    stroke(0);
+    line(x + legendWidth, tickY, x + legendWidth + 5, tickY);
+
+    // Draw label
+    fill(0);
+    textSize(10);
+    textAlign(LEFT, CENTER);
+    text(nf(value, 0, 1), x + legendWidth + 8, tickY);
+  }
+
+  // Add legend title
   fill(0);
   textSize(12);
-  textAlign(LEFT, CENTER);
-  text(nf(maxQuality, 0, 1), x + legendWidth + 5, y);
-  text(nf(minQuality, 0, 1), x + legendWidth + 5, y + legendHeight);
-  text("Quality", x, y - 15);
+  textAlign(LEFT, BOTTOM);
+  text("Quality", x, y - 5);
 }
 
 void drawAxes() {
@@ -110,13 +132,13 @@ void drawAxes() {
   textSize(12);
 
   // X-axis label
-  drawBillboardText("Alcohol", 160, 0, 0);
+  drawBillboardText("Alcohol [%]", 160, 0, 0);
 
   // Y-axis label
-  drawBillboardText("Volatile Acidity", 0, -160, 0);
+  drawBillboardText("Volatile Acidity  [g/dm³]", 0, -160, 0);
 
   // Z-axis label
-  drawBillboardText("Sulphates", 0, 0, 160);
+  drawBillboardText("Sulphates  [g/dm³]", 0, 0, 160);
 }
 
 // Function to draw text that always faces the camera
@@ -132,8 +154,66 @@ void drawBillboardText(String txt, float x, float y, float z) {
   popMatrix();
 }
 
+void drawAxisTicks() {
+  int numTicks = 5; // Number of tick marks on each axis
+  float axisLength = 200; // Total length of each axis (from -100 to 100)
+  float tickLength = 5; // Length of each tick mark
+
+  // X-axis ticks (Alcohol)
+  for (int i = 0; i <= numTicks; i++) {
+    float t = map(i, 0, numTicks, -100, 100);
+    float value = map(i, 0, numTicks, min(alcohol), max(alcohol));
+
+    // Draw tick mark
+    stroke(0);
+    line(t, -tickLength, 0, t, tickLength, 0);
+
+    // Draw label
+    drawBillboardText(nf(value, 0, 1), t, -15, 0);
+  }
+
+  // Y-axis ticks (Volatile Acidity)
+  for (int i = 0; i <= numTicks; i++) {
+    float t = map(i, 0, numTicks, -100, 100);
+    float value = map(i, 0, numTicks, min(volatileAcidity), max(volatileAcidity));
+
+    // Draw tick mark
+    stroke(0);
+    line(-tickLength, t, 0, tickLength, t, 0);
+
+    // Draw label
+    drawBillboardText(nf(value, 0, 2), -15, t, 0);
+  }
+
+  // Z-axis ticks (Sulphates)
+  for (int i = 0; i <= numTicks; i++) {
+    float t = map(i, 0, numTicks, -100, 100);
+    float value = map(i, 0, numTicks, min(sulphates), max(sulphates));
+
+    // Draw tick mark
+    stroke(0);
+    line(0, -tickLength, t, 0, tickLength, t);
+
+    // Draw label
+    drawBillboardText(nf(value, 0, 2), 0, -15, t);
+  }
+}
+
 void draw() {
   background(255);
+  
+    // Draw the title
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  text("3D Wine Quality Visualization", width / 2, 40);
+  
+    // Draw the subtitle
+  textSize(14);
+  fill(100);  // Use a slightly lighter color for the subtitle if desired
+  text("Analyzing Effects of Alcohol, Volatile Acidity, and Sulphates on Wine Quality", width / 2, 75);
+
+  
   lights();
   // Apply transformations
   pushMatrix();
@@ -142,6 +222,7 @@ void draw() {
   rotateY(angleY);
 
   drawAxes();
+  drawAxisTicks();
   drawColorLegend();
   drawGridLines();
 
@@ -192,7 +273,7 @@ boolean isMouseOverSphere(PVector pos) {
   // Convert the 3D position to 2D screen coordinates
   PVector screenPos = modelToScreen(pos);
   float d = dist(mouseX, mouseY, screenPos.x, screenPos.y);
-  if (d < 5) { // Adjust this threshold as needed
+  if (d < 25) { // Adjust this threshold as needed
     return true;
   } else {
     return false;
@@ -202,22 +283,24 @@ boolean isMouseOverSphere(PVector pos) {
 // Function to convert model coordinates to screen coordinates
 PVector modelToScreen(PVector modelPos) {
   // Apply the same transformations used in draw()
-  // First, we need to isolate transformations
   pushMatrix();
   translate(width / 2, height / 2, zoom);
   rotateX(angleX);
   rotateY(angleY);
-  float sx = screenX(modelPos.x, modelPos.y, modelPos.z);
-  float sy = screenY(modelPos.x, modelPos.y, modelPos.z);
+  // Apply the same translation as in draw()
+  translate(modelPos.x, modelPos.y, modelPos.z);
+  // After translation, the point of interest is at (0,0,0)
+  float sx = screenX(0, 0, 0);
+  float sy = screenY(0, 0, 0);
   popMatrix();
   return new PVector(sx, sy);
 }
 
 void displayTooltip(int index) {
   // Prepare the tooltip text
-  String info = "Alcohol: " + nf(alcohol[index], 0, 2) +
-                "\nVolatile Acidity: " + nf(volatileAcidity[index], 0, 2) +
-                "\nSulphates: " + nf(sulphates[index], 0, 2) +
+  String info = "Alcohol: " + nf(alcohol[index], 0, 2) + " %" +
+                "\nVolatile Acidity:" + nf(volatileAcidity[index], 0, 2) + "g/dm³" +
+                "\nSSSulphates ttesetset: " + nf(sulphates[index], 0, 2) + " g/dm³" +
                 "\nQuality: " + nf(quality[index], 0, 1);
 
   // Draw the tooltip background
